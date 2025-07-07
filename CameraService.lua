@@ -104,7 +104,7 @@ local cameraSettings = {
 	["Default"] = {},
 	["FirstPerson"] = {Wobble = 2.25, CharacterVisibility = "None", Smoothness = 1, RotSmoothness = 0, Zoom = 0, AlignChar = true, Offset = CFrame.new(0,0,0), LockMouse = true, MinZoom = 0, MaxZoom = 0, BodyFollow = true},
 	["FirstPersonVariant"] = {Wobble = 2.25, CharacterVisibility = "Body", Smoothness = .35, RotSmoothness = 0, Zoom = 0, AlignChar = true, Offset = CFrame.new(0,0.2,.75), LockMouse = true, MinZoom = 0, MaxZoom = 0, BodyFollow = true},
-	["ThirdPerson"] = {Wobble = 4, CharacterVisibility = "All", Smoothness = .7, Zoom = 10, AlignChar = false, Offset = CFrame.new(0,0,0), LockMouse = false, MinZoom = 5, MaxZoom = 15, BodyFollow = true},
+	["ThirdPerson"] = {Wobble = 2, CharacterVisibility = "All", Smoothness = .7, Zoom = 10, AlignChar = false, Offset = CFrame.new(0,0,0), LockMouse = false, MinZoom = 5, MaxZoom = 15, BodyFollow = true},
 	["ShiftLock"] = {Wobble = 4, CharacterVisibility = "All", Smoothness = 0.7, Zoom = 7.5, Offset = CFrame.new(1.75, 0.5, 1), LockMouse = true, AlignChar = true, MinZoom = 2, MaxZoom = 15, BodyFollow = true},
 	["Cinematic"] = {
 		Smoothness = 5,
@@ -239,10 +239,11 @@ local function updateCamera(deltaTime: number)
 
 	local self = CameraService
 	--> Console has different inputs + logic. This helps set up CONSOLE camera movement
-	if UserInputService.GamepadEnabled then 
+	if UserInputService.GamepadEnabled then
 		cameraRotation -= differenceVector
+	else
+		differenceVector = Vector2.zero
 	end
-	differenceVector = Vector2.zero
 	--> Clamp the y-vals for camera rotating
 	cameraRotation = Vector2.new(
 		self.xLock and self.atX or cameraRotation.X, 
@@ -272,13 +273,13 @@ local function updateCamera(deltaTime: number)
 	--> Damping the motion of the camera for smoothing
 	local desiredTime = self.Smoothness ^ 2 * 0.05 + 0.02 * self.Smoothness +0.005
 	local lerpFactor = math.min(1, deltaTime / desiredTime)
-	
+
 	if self.MinZoom == 0 and self.MaxZoom == 0 and self.RotSmoothness > self.Smoothness then
 		local desiredTime2 = self.RotSmoothness ^ 2 * 0.05 + 0.02 * self.RotSmoothness +0.005
 		local lerpFactor2 = math.min(1, deltaTime / desiredTime2)
 		rotationCFrame = self.RotSmoothness > 0 and pastCamRot:Lerp(rotationCFrame, lerpFactor2) or rotationCFrame
 	end
-	
+
 	pastCamRot = rotationCFrame
 	local camCFrame = (rotationCFrame * self.Offset * self.TiltFactor) + currentCamPosition + offset + (rotationCFrame * Vector3.new(0,0,self.Zoom))
 	local camPos = raycastWorld(currentCamPosition + offset, camCFrame.p - offset - currentCamPosition)
