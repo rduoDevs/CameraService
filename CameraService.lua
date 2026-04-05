@@ -72,7 +72,7 @@
     Input a number in degrees from 0 (least range of motion) to 89 (most).
 
     Created by @Lugical | Relased September, 2022
-    Version 2.2.0 | Aug. 2024
+    Version 2.4.0 | April 2026
 --]]
 
 math.randomseed(tick())
@@ -97,15 +97,63 @@ local updateShake = 0
 local delta = 0;
 local differenceVector = Vector2.zero;
 local waistCache;
+local wobbleAngle = 0;
 local neckCache;
 
 --> Built-in camera views
 local cameraSettings = { 
 	["Default"] = {},
-	["FirstPerson"] = {Wobble = 2.25, CharacterVisibility = "None", Smoothness = 1, RotSmoothness = 0, Zoom = 0, AlignChar = true, Offset = CFrame.new(0,0,0), LockMouse = true, MinZoom = 0, MaxZoom = 0, BodyFollow = true},
-	["FirstPersonVariant"] = {Wobble = 2.25, CharacterVisibility = "Body", Smoothness = .35, RotSmoothness = 0, Zoom = 0, AlignChar = true, Offset = CFrame.new(0,0.2,.75), LockMouse = true, MinZoom = 0, MaxZoom = 0, BodyFollow = true},
-	["ThirdPerson"] = {Wobble = 2, CharacterVisibility = "All", Smoothness = .7, Zoom = 10, AlignChar = false, Offset = CFrame.new(0,0,0), LockMouse = false, MinZoom = 5, MaxZoom = 15, BodyFollow = true},
-	["ShiftLock"] = {Wobble = 4, CharacterVisibility = "All", Smoothness = 0.7, Zoom = 7.5, Offset = CFrame.new(1.75, 0.5, 1), LockMouse = true, AlignChar = true, MinZoom = 2, MaxZoom = 15, BodyFollow = true},
+	["FirstPerson"] = {
+		Wobble = .45, 
+		CharacterVisibility = "None", 
+		Smoothness = 1, 
+		RotSmoothness = 0, 
+		Zoom = 0, 
+		AlignChar = true, 
+		Offset = CFrame.new(0,0,0), 
+		LockMouse = true, 
+		MinZoom = 0, 
+		MaxZoom = 0, 
+		BodyFollow = true
+	},
+	
+	["FirstPersonVariant"] = {
+		Wobble = 2, 
+		CharacterVisibility = "Body", 
+		Smoothness = .35, 
+		RotSmoothness = 0, 
+		Zoom = 0, 
+		AlignChar = true, 
+		Offset = CFrame.new(0,0.2,.75), 
+		LockMouse = true, 
+		MinZoom = 0, 
+		MaxZoom = 0, 
+		BodyFollow = true},
+	
+	["ThirdPerson"] = {
+		Wobble = .4, 
+		CharacterVisibility = "All", 
+		Smoothness = .7, 
+		Zoom = 10, 
+		AlignChar = false, 
+		Offset = CFrame.new(0,0,0), 
+		LockMouse = false, 
+		MinZoom = 5, 
+		MaxZoom = 15, 
+		BodyFollow = true},
+	
+	["ShiftLock"] = {
+		Wobble = 0, 
+		CharacterVisibility = "All", 
+		Smoothness = 0.7, 
+		Zoom = 7.5, 
+		Offset = CFrame.new(1.75, 0.5, 1), 
+		LockMouse = true, 
+		AlignChar = true, 
+		MinZoom = 2, 
+		MaxZoom = 15, 
+		BodyFollow = true},
+	
 	["Cinematic"] = {
 		Smoothness = 5,
 		CharacterVisibility = "All",
@@ -120,7 +168,7 @@ local cameraSettings = {
 	}	
 }
 
---> Connections when system is running. Clears out when not in use
+
 local connectionList: {RBXScriptConnection} = {}
 
 --> For camera views
@@ -143,7 +191,7 @@ local CameraService = {
 	Offset = CFrame.new(),
 	TiltFactor = CFrame.fromEulerAnglesYXZ(0,0,0),
 	Angle = 60,
-	Host = currentCharacter:WaitForChild("Humanoid").RigType == Enum.HumanoidRigType.R15 and currentCharacter:WaitForChild("HumanoidRootPart") or currentCharacter:WaitForChild("Torso"),
+	Host = currentCharacter:WaitForChild("HumanoidRootPart"),
 }
 
 ---> Camera System Functions <---
@@ -249,34 +297,41 @@ local function updateCamera(deltaTime: number)
 		self.xLock and self.atX or cameraRotation.X, 
 		self.yLock and self.atY or math.clamp(cameraRotation.Y, math.rad(-self.Angle), math.rad(self.Angle))
 	) 
-
+	
 	currentCamPosition = self.Host.Position + Vector3.new(0, self.Host.Parent and self.Host.Parent == currentCharacter and 2.5 or 0,0)
-
-	--> Convert cameraRotation into an angle CFrame (YXZ = Angles)
+	
+	
+	--> rotate camera via arrow keys on PC
 	if UserInputService:IsKeyDown(Enum.KeyCode.Right) then
-		arrowKeyAngle += .045
+		arrowKeyAngle += 3 * deltaTime
 	elseif UserInputService:IsKeyDown(Enum.KeyCode.Left) then
-		arrowKeyAngle -= .045
+		arrowKeyAngle -= 3 * deltaTime
 	end
+	
+	--> Convert cameraRotation into an angle CFrame (YXZ = Angles)
 	local rotationCFrame = CFrame.fromEulerAnglesYXZ(cameraRotation.Y, cameraRotation.X - arrowKeyAngle, 0)
 	updateShake = updateShake < math.random(2,3) and updateShake + 1 or 0
 	offset = self.Shaking and offset and updateShake == 0 and calculateShakingOffset(self.ShakingIntensity) or self.Shaking and offset or Vector3.new(0,0,0)
 	local yCFOffset = CFrame.fromEulerAnglesYXZ(0,0,0)
-	if self.Wobble and self.Wobble > 0 then
-		--> For slight camera tilting for footsteps
+	
+	--> Dynamic wobble based on character's movement
+	if self.Wobble and self.Wobble > 0 and self.Host.Parent and self.Host.Parent == currentCharacter then
 		pcall(function()
-			local yOff = currentCharacter.Humanoid.RigType == Enum.HumanoidRigType.R15 and (currentCharacter["LeftFoot"].Position.Y - currentCharacter["RightFoot"].Position.Y) / 1.5 or currentCharacter.Humanoid.RigType == Enum.HumanoidRigType.R6 and (currentCharacter["Left Leg"].Position.Y - currentCharacter["Right Leg"].Position.Y) or 0
-			yCFOffset = CFrame.fromEulerAnglesYXZ(0,0, math.rad(yOff / self.Wobble))
+			local yOff = currentCharacter.Humanoid.RigType == 
+				Enum.HumanoidRigType.R15 and (currentCharacter["LeftFoot"].Position.Y - currentCharacter["RightFoot"].Position.Y) / 1.5 
+				or currentCharacter.Humanoid.RigType == Enum.HumanoidRigType.R6 and (currentCharacter["Left Leg"].Position.Y - currentCharacter["Right Leg"].Position.Y) or 0
+			local target = math.rad(yOff * (self.Wobble^1.5))
+			yCFOffset = CFrame.fromEulerAnglesYXZ(0,0, target)
 		end) 
 	end
 
 	--> Damping the motion of the camera for smoothing
 	local desiredTime = self.Smoothness ^ 2 * 0.05 + 0.02 * self.Smoothness +0.005
-	local lerpFactor = math.min(1, deltaTime / desiredTime)
+	local lerpFactor = 1 - math.exp(-deltaTime / desiredTime) --math.min(1, deltaTime / desiredTime)
 
 	if self.MinZoom == 0 and self.MaxZoom == 0 and self.RotSmoothness > self.Smoothness then
 		local desiredTime2 = self.RotSmoothness ^ 2 * 0.05 + 0.02 * self.RotSmoothness +0.005
-		local lerpFactor2 = math.min(1, deltaTime / desiredTime2)
+		local lerpFactor2 = 1 - math.exp(-deltaTime / desiredTime2)--math.min(1, deltaTime / desiredTime2)
 		rotationCFrame = self.RotSmoothness > 0 and pastCamRot:Lerp(rotationCFrame, lerpFactor2) or rotationCFrame
 	end
 
@@ -312,9 +367,9 @@ local function updateCamera(deltaTime: number)
 		desired2 = damper()
 	end
 
-	lerp2 = desired2 ~= desiredTime and cam.CFrame:Lerp(camCFrame, math.min(1, deltaTime / desired2)) or nil
+	lerp2 = desired2 ~= desiredTime and cam.CFrame:Lerp(camCFrame, 1 - math.exp(-deltaTime / desired2)) or nil
 	cam.CFrame = self.Smoothness <= 0 and camCFrame or CFrame.new(targetCFrame.X, lerp2 and lerp2.Y or targetCFrame.Y, targetCFrame.Z) * targetCFrame.Rotation * yCFOffset 
-
+	
 	--> Extraneous character alignment features if needed
 	if self.Host.Parent == currentCharacter then
 		workspace.Retargeting = Enum.AnimatorRetargetingMode.Disabled
@@ -463,7 +518,7 @@ function CameraService:SetCameraView(__type: string) --> Used to change views (i
 		table.insert(connectionList, UserInputService.InputChanged:Connect(onInputChange))
 		table.insert(connectionList, UserInputService.InputEnded:Connect(onInputChange))
 		--> Set up the actual system to run
-		table.insert(connectionList, RunService.PreSimulation:Connect(updateCamera))
+		table.insert(connectionList, RunService.PostSimulation:Connect(updateCamera))
 
 		--> Special effects for the CINEMATIC VIEW
 		if __type == "Cinematic" then
@@ -486,20 +541,22 @@ function CameraService:SetCameraView(__type: string) --> Used to change views (i
 
 			uiFrame1:TweenPosition(UDim2.new(0,0,0,0), "Out", "Sine", .25, true)
 			uiFrame2:TweenPosition(UDim2.new(0,0,.865,0), "Out", "Sine", .25, true)
-		else
-			local ui = player:WaitForChild("PlayerGui"):FindFirstChild("CameraService_Cinematic_Effect")
-			if ui then
-				local uiFrame1 = ui:FindFirstChild("Frame1")
-				local uiFrame2 = ui:FindFirstChild("Frame2")
-				if uiFrame1 then
-					uiFrame1:TweenPosition(UDim2.new(0,0,-.1360,0), "Out", "Sine", .25, true)
-				end
-				if uiFrame2 then
-					uiFrame2:TweenPosition(UDim2.new(0,0,1,0), "Out", "Sine", .25, true)
-				end
-				task.wait(.25)
-				ui:Destroy()
+		end
+	end
+	
+	if __type ~= "Cinematic" then
+		local ui = player:WaitForChild("PlayerGui"):FindFirstChild("CameraService_Cinematic_Effect")
+		if ui then
+			local uiFrame1 = ui:FindFirstChild("Frame1")
+			local uiFrame2 = ui:FindFirstChild("Frame2")
+			if uiFrame1 then
+				uiFrame1:TweenPosition(UDim2.new(0,0,-.1360,0), "Out", "Sine", .25, true)
 			end
+			if uiFrame2 then
+				uiFrame2:TweenPosition(UDim2.new(0,0,1,0), "Out", "Sine", .25, true)
+			end
+			task.wait(.25)
+			ui:Destroy()
 		end
 	end
 end

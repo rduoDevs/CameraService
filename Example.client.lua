@@ -1,7 +1,7 @@
 --\\----- [EXAMPLES FOR CAMERASERVICE] -----//--
 --[[
 	Script for the demo place, showcasing how one can use CameraService.
-	By @Lugical, September 2022
+	By @Lugical
 --]]
 
 local CameraService = require(script.Parent:WaitForChild("CameraService"))
@@ -10,11 +10,12 @@ local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local ui = playerGui:WaitForChild("ScreenGui")
 local uiButton = ui.TextButton
-
 local function resetToNormal()
+	uiButton.Visible = false
 	game.Lighting.DepthOfField.Enabled = false
 	game.Lighting.ColorCorrection.Saturation = -0.2
 	game.Lighting.ColorCorrection.Contrast = 0.2
+	CameraService:LockCameraPanning(false, false)
 	CameraService:ChangeSensitivity(1)
 	if player.Character then
 		player.Character.Humanoid.WalkSpeed = 16
@@ -22,10 +23,12 @@ local function resetToNormal()
 	CameraService:ChangeFOV(70, false)
 end
 
-task.wait(1) --> Not needed, might be nice to allow time to load
-CameraService:SetCameraView("ThirdPerson")
 
---[[ 2D Platformer Example
+CameraService:SetCameraHost()
+CameraService:SetCameraView("ThirdPerson")
+resetToNormal()
+
+--[[ 2D platformer
 local info = {
 	Smoothness = 3,
 	CharacterVisibility = "All",
@@ -41,6 +44,7 @@ local info = {
 CameraService:CreateNewCameraView("2D_test", info) --> Uses info to create a new camera view!
 CameraService:LockCameraPanning(true, true, 90, 0)
 ]]
+
 uiButton.MouseButton1Click:Connect(function()
 	resetToNormal()
 	uiButton.Visible = false
@@ -60,6 +64,12 @@ workspace.ThirdPart.ProximityPrompt.Triggered:Connect(function()
 	resetToNormal()
 	CameraService:SetCameraView("ThirdPerson")
 end)
+
+workspace.DefaultPart.ProximityPrompt.Triggered:Connect(function()
+	resetToNormal()
+	CameraService:SetCameraView("Default")
+end)
+
 
 workspace.FirstPart.ProximityPrompt.Triggered:Connect(function()
 	resetToNormal()
@@ -90,5 +100,13 @@ end)
 workspace.TiltPart.ProximityPrompt.Triggered:Connect(function()
 	CameraService:Tilt(30)
 	task.wait(5)
+	CameraService:Tilt(0)
+end)
+
+workspace.RotatePart.ProximityPrompt.Triggered:Connect(function()
+	for i = 1, 360 do
+		CameraService:Tilt(i)
+		game:GetService("RunService").PreSimulation:Wait()
+	end
 	CameraService:Tilt(0)
 end)
