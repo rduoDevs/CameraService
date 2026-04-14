@@ -1,9 +1,9 @@
+### Like what you see? Give it a star to show support! ⭐
+
 # CameraService
-*Looking for the DevForums posting? Find it here: https://devforum.roblox.com/t/cameraservice-a-new-camera-for-a-new-roblox/1988655*
+CameraService is my first open-source, serving as an alternative to the default Roblox camera system. I decided to create a **beginner-friendly**, custom camera system that lets developers of all kinds be able to implement new, breathtaking camera views into their games with ease. Used by 1000+ game-devs and counting, it's the perfect alternative that you've been looking for.
 
-Created by me, Ryan! (or Lugical, if you know my Roblox username)
-
-CameraService is my first open-source, serving as an alternative to the default Roblox camera system. I decided to create a custom camera system that lets developers of all kinds be able to implement new, breathtaking camera views into their games and experiences with relative ease compared to having to do it out by themselves. This system is for Roblox game development. 
+*Read more on the DevForums here: https://devforum.roblox.com/t/cameraservice-a-new-camera-for-a-new-roblox/1988655*
 
 ## The Features
 The list of features goes on and on, some of which include:
