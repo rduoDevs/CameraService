@@ -1,0 +1,84 @@
+# Moonwave configuration — see https://eryn.io/moonwave/docs/Configuration
+#
+# Most fields below are auto-populated from your Git remote when present
+# (title, gitRepoUrl, organizationName, projectName, etc.). The values
+# here serve as the explicit fallbacks used by the GitHub Pages build.
+
+title = "CameraService"
+gitRepoUrl = "https://github.com/rduoDevs/CameraService"
+gitSourceBranch = "main"
+changelog = true
+
+# Custom landing page (instead of just rendering the README).
+[home]
+enabled = true
+includeReadme = false
+
+[[home.features]]
+title = "Built-in Views"
+description = "First-person, third-person, shift-lock, and cinematic views ready out of the box — switch with a single call."
+
+[[home.features]]
+title = "Buttery Smoothing"
+description = "Linear interpolation and damping replace Roblox's jittery default motion with cinema-grade movement."
+
+[[home.features]]
+title = "Cross-Platform"
+description = "Works seamlessly on PC, console, mobile, and tablet — input handling is already wired up."
+
+# Docusaurus passthrough — controls site URL, project name, and Docusaurus
+# config keys. Values here mirror Moonwave's defaults and are pulled from Git
+# where possible.
+[docusaurus]
+projectName = "CameraService"
+organizationName = "rduoDevs"
+url = "https://rduoDevs.github.io"
+baseUrl = "/CameraService"
+tagline = "A new camera, for a new Roblox."
+onBrokenLinks = "warn"
+onBrokenMarkdownLinks = "warn"
+
+# Custom navbar links (alongside the auto-generated Docs / API links).
+[[navbar.items]]
+href = "https://devforum.roblox.com/t/cameraservice-a-new-camera-for-a-new-roblox/1988655"
+label = "DevForum"
+position = "right"
+
+# Footer
+[footer]
+style = "dark"
+copyright = "Copyright © 2022–2026 rduoDevs. Built with Moonwave and Docusaurus."
+
+[[footer.links]]
+title = "Docs"
+
+[[footer.links.items]]
+label = "Getting Started"
+to = "docs/intro"
+
+[[footer.links.items]]
+label = "API Reference"
+to = "api/CameraService"
+
+[[footer.links]]
+title = "Community"
+
+[[footer.links.items]]
+label = "DevForum Thread"
+href = "https://devforum.roblox.com/t/cameraservice-a-new-camera-for-a-new-roblox/1988655"
+
+[[footer.links]]
+title = "More"
+
+[[footer.links.items]]
+label = "GitHub"
+href = "https://github.com/rduoDevs/CameraService"
+
+# Group methods under these headings on the API page. Tag any method with
+# e.g. `@tag effect` and it'll appear under "Effects" in the right-hand TOC.
+apiCategories = [
+    "view",
+    "host",
+    "customization",
+    "effect",
+]
