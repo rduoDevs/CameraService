@@ -187,15 +187,139 @@ local propertyTypes = {
 }
 
 --- @class CameraService
---- Open-sourced custom camera system for Roblox experiences.
---- Switch between built-in views, add your own, and control smoothing,
---- host, FOV, shake, tilt, and more — all from a single module.
+--- Structured as a singleton, CameraService operates by implementing its own base camera system
+--- with various properties and methods you can use to customize it how you wish, or to enable a prebuilt camera.
+---
+--- Some of the API is not the cleanest. A cleanup + conversion to Luau is planned!
 local CameraService = {
 	Offset = CFrame.new(),
 	TiltFactor = CFrame.fromEulerAnglesYXZ(0,0,0),
 	Angle = 60,
 	Host = currentCharacter:WaitForChild("HumanoidRootPart"),
 }
+
+--[=[
+	@within CameraService
+	@prop CameraView string
+	@readonly
+
+	The current camera view CameraService is applying. To adjust the current view,
+	do so via [CameraService:SetCameraView]
+	(e.g. `"FirstPerson"`, `"ThirdPerson"`).
+]=]
+
+--[=[
+	@within CameraService
+	@prop Host BasePart
+
+	The part the camera focuses on. Defaults to the player's
+	`HumanoidRootPart`. Point it elsewhere with [CameraService:SetCameraHost],
+	which validates the value and resets cleanly on respawn.
+]=]
+
+--[=[
+	@within CameraService
+	@prop Smoothness number
+
+	Value representing how "smooth" camera motion is perceived. `0` is instant, while higher values create smoother, flow motion.
+]=]
+
+--[=[
+	@within CameraService
+	@prop RotSmoothness number
+	@tag Restricted
+
+	Smoothing applied to camera *rotation* only, independent of `Smoothness`.
+	Applied only when the active view has no zoom range (e.g. first-person).
+]=]
+
+--[=[
+	@within CameraService
+	@prop Zoom number
+
+	Current distance, in studs, between the camera and its host.
+]=]
+
+--[=[
+	@within CameraService
+	@prop MinZoom number
+
+	Closest the player may zoom in, in studs.
+]=]
+
+--[=[
+	@within CameraService
+	@prop MaxZoom number
+	Furthest the player may zoom out, in studs.
+]=]
+
+--[=[
+	@within CameraService
+	@prop Offset CFrame
+
+	Positional & rotational offset from the host, applied before zoom. Useful
+	for over-the-shoulder or shift-lock framing.
+]=]
+
+--[=[
+	@within CameraService
+	@prop CharacterVisibility string
+
+	Which parts of the host character are visible when it is the host:
+	`"All"` shows everything, `"Body"` hides the head, `"None"` hides the
+	whole character. Defaults to `"All"`.
+]=]
+
+--[=[
+	@within CameraService
+	@prop AlignChar boolean
+
+	When `true`, the character rotates to face the camera. Good for
+	shift-lock and first-person views. Defaults to `false`.
+]=]
+
+--[=[
+	@within CameraService
+	@prop BodyFollow boolean
+	@tag Restricted
+	@tag R15-Only
+
+	When `true`, the upper body leans toward the
+	mouse for a subtle look-at effect. This property
+	is *ignored* if `AlignChar` is true, as they are conflicting behaviors.
+]=]
+
+--[=[
+	@within CameraService
+	@prop LockMouse boolean
+
+	When `true`, the mouse is locked to the center of the screen.
+	Defaults to `false`.
+]=]
+
+--[=[
+	@within CameraService
+	@prop Wobble number
+
+	Intensity of the avatar-aware wobbling when walking; `0` disables it. Can be changed 
+	with [CameraService:SetWobbling].
+]=]
+
+--[=[
+	@within CameraService
+	@prop Angle number
+
+	Maximum vertical look angle, in degrees (how far up/down the player can
+	look). Set it through [CameraService:SetVerticalRange], which clamps to
+	`0`–`89`.
+]=]
+
+--[=[
+	@within CameraService
+	@prop TiltFactor CFrame
+
+	Accumulated camera tilt applied on top of the view.
+]=]
 
 -- > Camera System Functions < --
 
@@ -396,7 +520,7 @@ local function updateCamera(deltaTime: number)
 				local _, x, _ = camCFrame:ToEulerAnglesYXZ()
 				root.CFrame = CFrame.fromEulerAnglesYXZ(0, x + math.rad(self.Offset.X == 0 and 0 or -6), 0) + root.Position
 			elseif humanoid.RigType == Enum.HumanoidRigType.R15 then
-				if self.BodyFollow then
+				if self.BodyFollow and waist and neck then
 					waist.C0 = waist.C0:Lerp((CFrame.fromEulerAnglesYXZ(math.rad(mouse.Hit.LookVector:Dot(Vector3.new(0,1,0)) * 10), math.rad(mouse.Hit.LookVector:Dot((CFrame.Angles(root.CFrame:ToEulerAnglesYXZ()) * CFrame.new(-1,0,0)).Position.Unit) * 40), 0) + waistCache.Position), 0.25)
 					neck.C0 = neck.C0:Lerp((CFrame.fromEulerAnglesYXZ(math.rad(mouse.Hit.LookVector:Dot(Vector3.new(0,1,0)) * 30), 0, 0) + neckCache.Position), 0.25)
 					if waist and not waistCache then
@@ -421,8 +545,7 @@ end
 --- Sets the camera to a built-in or custom view, disconnecting the previous one.
 --- Will error if the given view ID does not exist.
 --- @within CameraService
---- @tag view
---- @param __type string -- The view ID to switch to (e.g. `"FirstPerson"`, `"ThirdPerson"`, `"ShiftLock"`, `"Cinematic"`, `"Default"`).
+--- @param __type string -- The view to apply (e.g. `"FirstPerson"`, `"ThirdPerson"`, `"ShiftLock"`, `"Cinematic"`, `"Default"`).
 function CameraService:SetCameraView(__type: string)
 	assert(cameraSettings[__type] ~= nil, "[CameraService] Camera view not found for ID: "..tostring(__type))
 
@@ -571,7 +694,6 @@ end
 --- Registers a new camera view that can later be activated via `:SetCameraView`.
 --- Any omitted property falls back to the default value and logs a warning.
 --- @within CameraService
---- @tag view
 --- @param id string -- Unique identifier for the new view.
 --- @param settingsArray table -- Table of camera property overrides (see `:Change` for valid keys).
 function CameraService:CreateNewCameraView(id: string, settingsArray: {})
@@ -592,9 +714,8 @@ end
 
 
 --- Locks camera movement along the X axis (left/right) or Y axis (up/down).
---- Useful for 2D side-scrollers or fixed-angle perspectives.
+--- Useful for 2D or isotropic cameras.
 --- @within CameraService
---- @tag customization
 --- @param lockXAxis boolean -- Lock horizontal rotation.
 --- @param lockYAxis boolean -- Lock vertical rotation.
 --- @param lockAtX number? -- Angle in degrees to lock horizontal rotation at.
@@ -609,10 +730,9 @@ function CameraService:LockCameraPanning(lockXAxis: boolean, lockYAxis: boolean,
 end
 
 
---- Redirects the camera to focus on a BasePart instead of the player character.
+--- Redirects the camera to focus on an input BasePart instead of the player character.
 --- Pass no argument (or nil) to reset back to the player's HumanoidRootPart.
 --- @within CameraService
---- @tag host
 --- @param newHost BasePart? -- The part to focus on, or nil to reset to the character.
 function CameraService:SetCameraHost(newHost: BasePart)
 	assert(not newHost or typeof(newHost) == "Instance" and newHost:IsA("BasePart"), "[CameraService] :SetCameraHost() only accepts a BasePart parameter, or none at all. ")
@@ -634,7 +754,6 @@ end
 --- - `AlignChar` (boolean): Rotate the character to match the camera (required for shift-lock / first-person).
 --- - `BodyFollow` (boolean): Upper-body rotates toward mouse when `AlignChar` is off.
 --- @within CameraService
---- @tag customization
 --- @param property string -- Name of the property to change.
 --- @param newVal any -- New value for the property.
 --- @param changeDefaultProperty boolean -- If true, also updates the active view's saved default.
@@ -652,7 +771,6 @@ end
 --- Adjusts mouse/input sensitivity by setting `UserInputService.MouseDeltaSensitivity`.
 --- Note: players can override this themselves via the Roblox settings menu.
 --- @within CameraService
---- @tag customization
 --- @param val number -- Sensitivity multiplier; must be greater than 0.
 function CameraService:ChangeSensitivity(val: number)
 	--> Make sure that "val" is positive before doing anything
@@ -665,7 +783,6 @@ end
 --- Pass `true` as the second argument to skip the tween and change it instantly.
 --- This function yields until the tween completes (unless `instant` is true).
 --- @within CameraService
---- @tag effect
 --- @yields
 --- @param val number -- Target field of view; must be greater than 0.
 --- @param instant boolean? -- If true, changes FOV immediately with no tween.
@@ -689,9 +806,7 @@ end
 
 
 --- Applies a shaking effect to the camera for the given duration, then stops.
---- This function yields for the full duration before returning.
 --- @within CameraService
---- @tag effect
 --- @yields
 --- @param intensity number -- Strength of the shake; values in the 0–1 range are recommended.
 --- @param duration number -- How long the shake lasts in seconds; must be greater than 0.
@@ -711,7 +826,6 @@ end
 
 --- Tilts the camera along the Z axis by the given number of degrees.
 --- @within CameraService
---- @tag effect
 --- @param degree number -- Tilt angle in degrees.
 function CameraService:Tilt(degree: number)
 	self.TiltFactor = CFrame.fromEulerAnglesYXZ(0, 0, math.rad(degree) or 0)
@@ -721,7 +835,6 @@ end
 --- Tilts the camera across all three axes simultaneously. Inputs are in degrees.
 --- Arguments follow Y, X, Z order to match `CFrame.fromEulerAnglesYXZ`.
 --- @within CameraService
---- @tag effect
 --- @param x number -- Tilt on the X axis in degrees.
 --- @param y number -- Tilt on the Y axis in degrees.
 --- @param z number -- Tilt on the Z axis in degrees.
@@ -730,9 +843,8 @@ function CameraService:TiltAllAxes(x: number, y: number, z: number)
 end
 
 
---- Sets the dynamic wobble intensity. Equivalent to `CameraService:Change("Wobble", value, false)`.
+--- Sets the avatar-aware wobble intensity. Equivalent to `CameraService:Change("Wobble", value, false)`.
 --- @within CameraService
---- @tag effect
 --- @param value number -- Wobble strength; 0 disables wobble.
 function CameraService:SetWobbling(value: number)
 	self.Wobble = value
@@ -741,7 +853,6 @@ end
 
 --- Sets how far up and down the player can look. Input is clamped to 0–89 degrees.
 --- @within CameraService
---- @tag customization
 --- @param angle number -- Maximum vertical look angle in degrees (0 = locked horizontal, 89 = nearly vertical).
 function CameraService:SetVerticalRange(angle: number)
 	self.Angle = math.clamp(math.abs(angle), 0, 89)

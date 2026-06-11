@@ -3,7 +3,6 @@ sidebar_position: 4
 ---
 
 # Examples
-
 Drop-in snippets for common camera setups. Each example assumes you've required the module on the client:
 
 ```lua
@@ -28,8 +27,8 @@ local info = {
     Wobble = 3,
 }
 
-CameraService:CreateNewCameraView("Cinematic_Intro", info)
-CameraService:SetCameraView("Cinematic_Intro")
+CameraService:CreateNewCameraView("Cinema", info)
+CameraService:SetCameraView("Cinema")
 CameraService:ChangeFOV(90)
 ```
 

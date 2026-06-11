@@ -3,48 +3,53 @@ sidebar_position: 2
 ---
 
 # Installation
+CameraService is readily available for installation via **GitHub** or **Roblox Creator Store**.
 
-CameraService is a single `ModuleScript`. There are two easy ways to get it into your game.
+## Roblox Creator Store
+1. Open [this](https://create.roblox.com/store/asset/10944075148/CameraService) and click **Get Model**.
+2. In Roblox Studio, open the **Toolbox → Inventory** and insert CameraService into `StarterPlayerScripts`
+3. Start scripting!
 
-## Option 1 — From GitHub
+## GitHub
+1. Download the latest [GitHub release](https://github.com/rduoDevs/CameraService/releases/latest).
+2. You may port over the `CameraService.lua` contents akin to above, or to open the adjacent `.rbxm` file to play around with the demo.
 
-1. Grab the latest [`CameraService.lua`](https://github.com/rduoDevs/CameraService/blob/main/CameraService.lua) from the repo.
-2. In Roblox Studio, insert a `ModuleScript` into `StarterPlayer → StarterPlayerScripts`.
-3. Rename it to `CameraService` and paste the source in.
+:::note What Type of Script?
+CameraService is stored as a ModuleScript on Roblox.
+:::
 
-## Option 2 — From the Roblox Library
-
-Grab the model directly from the [DevForum thread](https://devforum.roblox.com/t/cameraservice-a-new-camera-for-a-new-roblox/1988655) and drag it into `StarterPlayerScripts`.
-
-## Your first camera
+## Your First Camera
+Say you're building an exhibition showcase. You want the motion to be more smooth than typical.
 
 Add a `LocalScript` alongside (or under) the module and require it:
-
 ```lua
 -- LocalScript in StarterPlayerScripts
 local CameraService = require(script.Parent.CameraService)
 
 -- Switch to first-person on join
-CameraService:SetCameraView("FirstPerson")
+CameraService:SetCameraView("ThirdPerson")
 ```
 
-That's it — you now have a smoothed, mouse-locked first-person camera. To switch views at runtime:
+That's it — you now have a smoothed, mouse-locked first-person camera. Switch views at runtime the same way:
 
 ```lua
 CameraService:SetCameraView("ThirdPerson")
--- or "FirstPerson", "FirstPersonVariant", "ShiftLock", "Cinematic", "Default"
+-- Other options: "FirstPerson", "FirstPersonVariant", "ShiftLock", "Cinematic", "Default"
 ```
 
-Want to tweak something on the fly? Use [`:Change()`](/api/CameraService#Change):
+Tweak a property on the fly with [`:Change()`](/api/CameraService#Change):
 
 ```lua
--- Bump the smoothing way up for a dreamy feel
+-- Bump the smoothing up for a dreamy feel
 CameraService:Change("Smoothness", 4)
-
--- Or temporarily lock the mouse to the center
-CameraService:Change("LockMouse", true)
 ```
 
-:::caution Camera control
-CameraService takes over `cam.CameraType` and sets it to `Scriptable` while a view is active. Set the view to `"Default"` to release control back to Roblox's stock camera.
+:::caution Disabling CameraService
+While a view is active, CameraService sets `cam.CameraType` to `Scriptable`. Set the view to `"Default"` to hand control back to Roblox's default camera.
 :::
+
+## Next steps
+
+- Browse the **[built-in views](./built-in-views.md)** to see what ships out of the box.
+- Skim the **[examples](./examples.md)**.
+- Dig into the **[API Reference](/api/CameraService)** for every property and method.

@@ -17,17 +17,16 @@ CameraService:SetCameraView("Default") -- restores Roblox's default camera
 
 ## Default
 
-Hands control back to Roblox's stock camera. Useful for menus, cutscenes, or when you simply want CameraService out of the way.
+Hands control back to Roblox's stock camera.
 
 | Behavior        | Value                    |
 | --------------- | ------------------------ |
 | `CameraType`    | `Enum.CameraType.Custom` |
-| `CameraSubject` | `Humanoid`               |
 | `MouseBehavior` | `Default`                |
 
 ## FirstPerson
 
-Mouse-locked, body-hidden classic first-person. The character rotates with the camera and the head is hidden so the player doesn't see their own face.
+CameraService's version of the classic Roblox first-person view, with smoother motion. Avatar rotates with the camera. Character itself is hidden from view.
 
 | Property              | Value   |
 | --------------------- | ------- |
@@ -40,8 +39,7 @@ Mouse-locked, body-hidden classic first-person. The character rotates with the c
 | `Wobble`              | `0.45`  |
 
 ## FirstPersonVariant
-
-An over-the-shoulder twist on first-person — the head is hidden but the body is visible, with a slight forward offset. Good for survival or horror experiences where players want to feel embodied.
+For more grounded experiences, a first-person view that has view of the avatar's torso and limbs. Good for games where you'd want to see the player in some manner.
 
 | Property              | Value                       |
 | --------------------- | --------------------------- |
@@ -53,7 +51,8 @@ An over-the-shoulder twist on first-person — the head is hidden but the body i
 
 ## ThirdPerson
 
-A polished version of Roblox's default third-person camera, with smoothing and a wider zoom envelope.
+A polished version of Roblox's default third-person camera, with smoothing. It also includes
+slight camera wobbling response to the avatar's movements, and the character itself looking towards the current cursor position (R15.
 
 | Property              | Value    |
 | --------------------- | -------- |
@@ -65,9 +64,7 @@ A polished version of Roblox's default third-person camera, with smoothing and a
 | `Wobble`              | `0.4`    |
 
 ## ShiftLock
-
-Over-the-shoulder shift-lock with the mouse pinned to the center. The character aligns to the camera, which is what most action games expect.
-
+Over-the-shoulder shift-lock with the mouse pinned to the center. The character aligns to the camera. CameraService's version of the Roblox shift-lock view.
 | Property              | Value                       |
 | --------------------- | --------------------------- |
 | `CharacterVisibility` | `"All"`                     |
@@ -78,8 +75,7 @@ Over-the-shoulder shift-lock with the mouse pinned to the center. The character 
 | `AlignChar`           | `true`                      |
 
 ## Cinematic
-
-Letterboxed, high-smoothness, fixed-zoom view used for cutscenes and trailers. Black bars animate in at the top and bottom of the screen the moment the view is set and animate out when you switch away.
+The camera view you might see in the demo! Cool for a cutscene view template. Silky, slow camera motion. It also comes with UI gutters animating in at the top and bottom of the screen when set and animate out when you switch away.
 
 | Property              | Value      |
 | --------------------- | ---------- |
@@ -91,7 +87,6 @@ Letterboxed, high-smoothness, fixed-zoom view used for cutscenes and trailers. B
 | `Wobble`              | `0`        |
 
 ## Defining your own view
-
 Use [`:CreateNewCameraView()`](/api/CameraService#CreateNewCameraView) to register a new view. Pass a settings table; anything you leave out is auto-filled with sensible defaults.
 
 ```lua

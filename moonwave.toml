@@ -13,18 +13,19 @@ changelog = true
 [home]
 enabled = true
 includeReadme = false
+bannerImage = "../docs/img/cover.png"
 
 [[home.features]]
-title = "Built-in Views"
-description = "First-person, third-person, shift-lock, and cinematic views ready out of the box — switch with a single call."
+title = "Easy to Use"
+description = "Rather than having to build your own camera from first principles (and a ton of math), or making deep forks into the Roblox camera, CameraService provides an intuitive base, structured as a singleton service that you can call to adjust it how you need!"
 
 [[home.features]]
-title = "Buttery Smoothing"
-description = "Linear interpolation and damping replace Roblox's jittery default motion with cinema-grade movement."
+title = "Customizable"
+description = "In addition to the plethora of different, prebuilt game cameras that CameraService provides (including first-person, shift-lock, third-person, etc.), you can define your very own game-camera in just a few lines of code, detailing your wants and needs."
 
 [[home.features]]
-title = "Cross-Platform"
-description = "Works seamlessly on PC, console, mobile, and tablet — input handling is already wired up."
+title = "Abundant"
+description = "Cross-platform compatibility, smooth camera motion, camera shaking, camera tilting, wobbling, and responsive avatars are just some of the various camera features that CameraService provides (and Roblox does not.)"
 
 # Docusaurus passthrough — controls site URL, project name, and Docusaurus
 # config keys. Values here mirror Moonwave's defaults and are pulled from Git
@@ -37,16 +38,17 @@ baseUrl = "/CameraService"
 tagline = "A new camera, for a new Roblox."
 onBrokenLinks = "warn"
 onBrokenMarkdownLinks = "warn"
+favicon = "favicon.png"
 
 # Custom navbar links (alongside the auto-generated Docs / API links).
 [[navbar.items]]
 href = "https://devforum.roblox.com/t/cameraservice-a-new-camera-for-a-new-roblox/1988655"
-label = "DevForum"
+label = "DevForums"
 position = "right"
 
 # Footer
 [footer]
-style = "dark"
+style = "light"
 copyright = "Copyright © 2022–2026 rduoDevs. Built with Moonwave and Docusaurus."
 
 [[footer.links]]
@@ -56,6 +58,9 @@ title = "Docs"
 label = "Getting Started"
 to = "docs/intro"
 
+[[footer.links]]
+title = "API"
+
 [[footer.links.items]]
 label = "API Reference"
 to = "api/CameraService"
@@ -64,8 +69,12 @@ to = "api/CameraService"
 title = "Community"
 
 [[footer.links.items]]
-label = "DevForum Thread"
+label = "DevForums Post"
 href = "https://devforum.roblox.com/t/cameraservice-a-new-camera-for-a-new-roblox/1988655"
+
+[[footer.links.items]]
+label = "Discord Server"
+href = "https://discord.com/invite/bbnRYyfMJq"
 
 [[footer.links]]
 title = "More"
