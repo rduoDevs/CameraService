@@ -1,3 +1,5 @@
+![CameraService](static/favicon.png)
+### API Docs: https://rduodevs.github.io/CameraService/ 📷
 ### Like what you see? Give it a star to show support! ⭐
 
 # CameraService

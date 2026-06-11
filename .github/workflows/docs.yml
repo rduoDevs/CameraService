@@ -37,7 +37,9 @@ jobs:
       - name: Build site
         # `--code .` tells Moonwave to scan the project root for Lua source
         # (CameraService.lua sits at the repo root rather than in src/ or lib/).
-        run: moonwave build --code . --publish
+        # No `--publish`: that pushes to a legacy gh-pages branch. We deploy via
+        # the upload-pages-artifact + deploy-pages steps below instead.
+        run: moonwave build --code .
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
