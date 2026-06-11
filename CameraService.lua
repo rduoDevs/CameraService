@@ -76,18 +76,18 @@
 --]]
 
 math.randomseed(tick())
----> Services <---
+-- > Services < --
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 
----> Player & Camera Objects <---
+-- > Player & Camera Objects < --
 local player = Players.LocalPlayer
 local mouse = player:GetMouse()
 local cam = workspace.CurrentCamera or workspace:WaitForChild("Camera")
 
----> Camera System Variables <---
+-- > Camera System Variables < --
 local TWEEN_INFO = TweenInfo.new(.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 local currentCamPosition = Vector3.zero
 local cameraRotation = Vector2.zero
@@ -186,7 +186,11 @@ local propertyTypes = {
 	["Wobble"] = 0
 }
 
----> Module <---
+--- @class CameraService
+--- Structured as a singleton, CameraService operates by implementing its own base camera system
+--- with various properties and methods you can use to customize it how you wish, or to enable a prebuilt camera.
+---
+--- Some of the API is not the cleanest. A cleanup + conversion to Luau is planned!
 local CameraService = {
 	Offset = CFrame.new(),
 	TiltFactor = CFrame.fromEulerAnglesYXZ(0,0,0),
@@ -194,7 +198,130 @@ local CameraService = {
 	Host = currentCharacter:WaitForChild("HumanoidRootPart"),
 }
 
----> Camera System Functions <---
+--[=[
+	@within CameraService
+	@prop CameraView string
+	@readonly
+
+	The current camera view CameraService is applying. To adjust the current view,
+	do so via [CameraService:SetCameraView]
+	(e.g. `"FirstPerson"`, `"ThirdPerson"`).
+]=]
+
+--[=[
+	@within CameraService
+	@prop Host BasePart
+
+	The part the camera focuses on. Defaults to the player's
+	`HumanoidRootPart`. Point it elsewhere with [CameraService:SetCameraHost],
+	which validates the value and resets cleanly on respawn.
+]=]
+
+--[=[
+	@within CameraService
+	@prop Smoothness number
+
+	Value representing how "smooth" camera motion is perceived. `0` is instant, while higher values create smoother, flow motion.
+]=]
+
+--[=[
+	@within CameraService
+	@prop RotSmoothness number
+	@tag Restricted
+
+	Smoothing applied to camera *rotation* only, independent of `Smoothness`.
+	Applied only when the active view has no zoom range (e.g. first-person).
+]=]
+
+--[=[
+	@within CameraService
+	@prop Zoom number
+
+	Current distance, in studs, between the camera and its host.
+]=]
+
+--[=[
+	@within CameraService
+	@prop MinZoom number
+
+	Closest the player may zoom in, in studs.
+]=]
+
+--[=[
+	@within CameraService
+	@prop MaxZoom number
+	Furthest the player may zoom out, in studs.
+]=]
+
+--[=[
+	@within CameraService
+	@prop Offset CFrame
+
+	Positional & rotational offset from the host, applied before zoom. Useful
+	for over-the-shoulder or shift-lock framing.
+]=]
+
+--[=[
+	@within CameraService
+	@prop CharacterVisibility string
+
+	Which parts of the host character are visible when it is the host:
+	`"All"` shows everything, `"Body"` hides the head, `"None"` hides the
+	whole character. Defaults to `"All"`.
+]=]
+
+--[=[
+	@within CameraService
+	@prop AlignChar boolean
+
+	When `true`, the character rotates to face the camera. Good for
+	shift-lock and first-person views. Defaults to `false`.
+]=]
+
+--[=[
+	@within CameraService
+	@prop BodyFollow boolean
+	@tag Restricted
+	@tag R15-Only
+
+	When `true`, the upper body leans toward the
+	mouse for a subtle look-at effect. This property
+	is *ignored* if `AlignChar` is true, as they are conflicting behaviors.
+]=]
+
+--[=[
+	@within CameraService
+	@prop LockMouse boolean
+
+	When `true`, the mouse is locked to the center of the screen.
+	Defaults to `false`.
+]=]
+
+--[=[
+	@within CameraService
+	@prop Wobble number
+
+	Intensity of the avatar-aware wobbling when walking; `0` disables it. Can be changed 
+	with [CameraService:SetWobbling].
+]=]
+
+--[=[
+	@within CameraService
+	@prop Angle number
+
+	Maximum vertical look angle, in degrees (how far up/down the player can
+	look). Set it through [CameraService:SetVerticalRange], which clamps to
+	`0`–`89`.
+]=]
+
+--[=[
+	@within CameraService
+	@prop TiltFactor CFrame
+
+	Accumulated camera tilt applied on top of the view.
+]=]
+
+-- > Camera System Functions < --
 
 --> @hideBodyParts: helper function setting up CharacterVisibility
 local function hideBodyParts(__type: string) 
@@ -393,7 +520,7 @@ local function updateCamera(deltaTime: number)
 				local _, x, _ = camCFrame:ToEulerAnglesYXZ()
 				root.CFrame = CFrame.fromEulerAnglesYXZ(0, x + math.rad(self.Offset.X == 0 and 0 or -6), 0) + root.Position
 			elseif humanoid.RigType == Enum.HumanoidRigType.R15 then
-				if self.BodyFollow then
+				if self.BodyFollow and waist and neck then
 					waist.C0 = waist.C0:Lerp((CFrame.fromEulerAnglesYXZ(math.rad(mouse.Hit.LookVector:Dot(Vector3.new(0,1,0)) * 10), math.rad(mouse.Hit.LookVector:Dot((CFrame.Angles(root.CFrame:ToEulerAnglesYXZ()) * CFrame.new(-1,0,0)).Position.Unit) * 40), 0) + waistCache.Position), 0.25)
 					neck.C0 = neck.C0:Lerp((CFrame.fromEulerAnglesYXZ(math.rad(mouse.Hit.LookVector:Dot(Vector3.new(0,1,0)) * 30), 0, 0) + neckCache.Position), 0.25)
 					if waist and not waistCache then
@@ -415,8 +542,11 @@ local function updateCamera(deltaTime: number)
 	end
 end
 
---> @SetCameraView: Changes the game-cam to a new view, disabling the old
-function CameraService:SetCameraView(__type: string) --> Used to change views (i.e. from 1st to 3rd)
+--- Sets the camera to a built-in or custom view, disconnecting the previous one.
+--- Will error if the given view ID does not exist.
+--- @within CameraService
+--- @param __type string -- The view to apply (e.g. `"FirstPerson"`, `"ThirdPerson"`, `"ShiftLock"`, `"Cinematic"`, `"Default"`).
+function CameraService:SetCameraView(__type: string)
 	assert(cameraSettings[__type] ~= nil, "[CameraService] Camera view not found for ID: "..tostring(__type))
 
 	self.CameraView = __type
@@ -561,8 +691,12 @@ function CameraService:SetCameraView(__type: string) --> Used to change views (i
 	end
 end
 
---> @CreateNewCameraView: Creates new cam view w/inputs
-function CameraService:CreateNewCameraView(id: string, settingsArray: {}) 
+--- Registers a new camera view that can later be activated via `:SetCameraView`.
+--- Any omitted property falls back to the default value and logs a warning.
+--- @within CameraService
+--- @param id string -- Unique identifier for the new view.
+--- @param settingsArray table -- Table of camera property overrides (see `:Change` for valid keys).
+function CameraService:CreateNewCameraView(id: string, settingsArray: {})
 
 	--> Make sure that settingsArray is a table to ensure all runs well
 	assert(typeof(settingsArray) == "table", "[CameraService] 2nd parameter should be a table for :CreateNewCameraView()")
@@ -579,9 +713,14 @@ function CameraService:CreateNewCameraView(id: string, settingsArray: {})
 end
 
 
---> @LockCameraPanning: locks panning on a certain direction. 
---> Great for emulating 2D systems + games on Roblox
-function CameraService:LockCameraPanning(lockXAxis: boolean, lockYAxis: boolean, lockAtX: number, lockAtY: number) 
+--- Locks camera movement along the X axis (left/right) or Y axis (up/down).
+--- Useful for 2D or isotropic cameras.
+--- @within CameraService
+--- @param lockXAxis boolean -- Lock horizontal rotation.
+--- @param lockYAxis boolean -- Lock vertical rotation.
+--- @param lockAtX number? -- Angle in degrees to lock horizontal rotation at.
+--- @param lockAtY number? -- Angle in degrees to lock vertical rotation at.
+function CameraService:LockCameraPanning(lockXAxis: boolean, lockYAxis: boolean, lockAtX: number, lockAtY: number)
 	--> Set up the camera orientation
 	self.atX = lockAtX and math.rad(lockAtX) or 0
 	self.atY = lockAtY and math.rad(lockAtY) or 0
@@ -591,15 +730,34 @@ function CameraService:LockCameraPanning(lockXAxis: boolean, lockYAxis: boolean,
 end
 
 
---> @SetCameraHost: for when you change the object the camera focuses on
+--- Redirects the camera to focus on an input BasePart instead of the player character.
+--- Pass no argument (or nil) to reset back to the player's HumanoidRootPart.
+--- @within CameraService
+--- @param newHost BasePart? -- The part to focus on, or nil to reset to the character.
 function CameraService:SetCameraHost(newHost: BasePart)
 	assert(not newHost or typeof(newHost) == "Instance" and newHost:IsA("BasePart"), "[CameraService] :SetCameraHost() only accepts a BasePart parameter, or none at all. ")
 	self.Host = newHost or currentCharacter:FindFirstChild("HumanoidRootPart")
 end
 
 
---> @Change: changes camera aspects/properties.
-function CameraService:Change(property: string, newVal: any, changeDefaultProperty: boolean) 
+--- Changes a live camera property. Optionally persists the change into the current view's defaults.
+---
+--- Valid properties:
+--- - `CharacterVisibility` (string): `"All"`, `"Body"` (hides head), or `"None"` (hides whole body).
+--- - `MinZoom` (number): Closest zoom distance in studs.
+--- - `MaxZoom` (number): Furthest zoom distance in studs.
+--- - `Zoom` (number): Current camera distance in studs.
+--- - `Smoothness` (number): Camera lag factor; 0–1 recommended, higher = cinematic.
+--- - `Offset` (CFrame): Positional offset from the camera host.
+--- - `Wobble` (number): Dynamic wobble intensity.
+--- - `LockMouse` (boolean): Keep the mouse locked at screen center.
+--- - `AlignChar` (boolean): Rotate the character to match the camera (required for shift-lock / first-person).
+--- - `BodyFollow` (boolean): Upper-body rotates toward mouse when `AlignChar` is off.
+--- @within CameraService
+--- @param property string -- Name of the property to change.
+--- @param newVal any -- New value for the property.
+--- @param changeDefaultProperty boolean -- If true, also updates the active view's saved default.
+function CameraService:Change(property: string, newVal: any, changeDefaultProperty: boolean)
 	--> Make sure the requested property to change is valid
 	assert(propertyTypes[property] ~= nil, '[CameraService] "'..tostring(property)..'" is not a valid property to change.')
 
@@ -610,17 +768,24 @@ function CameraService:Change(property: string, newVal: any, changeDefaultProper
 end
 
 
---> @ChangeSensitivity: adjusts the player's mouse deltas as needed
---> You can also just alter MouseDeltaSensitivity in UserInputService directly.
---> This is here in case you forget :3
-function CameraService:ChangeSensitivity(val: number) 
+--- Adjusts mouse/input sensitivity by setting `UserInputService.MouseDeltaSensitivity`.
+--- Note: players can override this themselves via the Roblox settings menu.
+--- @within CameraService
+--- @param val number -- Sensitivity multiplier; must be greater than 0.
+function CameraService:ChangeSensitivity(val: number)
 	--> Make sure that "val" is positive before doing anything
 	assert(type(val) == "number" and val > 0, "[CameraService] Sensitivity should be greater than 0.")
 	UserInputService.MouseDeltaSensitivity = val
 end
 
 
---> @ChangeFOV: POV: your FOV changes. Great for sprinting effects!
+--- Smoothly tweens the camera's field of view to the given value.
+--- Pass `true` as the second argument to skip the tween and change it instantly.
+--- This function yields until the tween completes (unless `instant` is true).
+--- @within CameraService
+--- @yields
+--- @param val number -- Target field of view; must be greater than 0.
+--- @param instant boolean? -- If true, changes FOV immediately with no tween.
 function CameraService:ChangeFOV(val: number, instant: boolean)
 
 	--> Make sure that "val" is positive before doing anything
@@ -640,8 +805,12 @@ end
 
 
 
---> @Shake: quakes more than Quaker Oats.
-function CameraService:Shake(intensity: number, duration: number) 
+--- Applies a shaking effect to the camera for the given duration, then stops.
+--- @within CameraService
+--- @yields
+--- @param intensity number -- Strength of the shake; values in the 0–1 range are recommended.
+--- @param duration number -- How long the shake lasts in seconds; must be greater than 0.
+function CameraService:Shake(intensity: number, duration: number)
 
 	--> Make sure that arguments are positive before doing anything
 	assert(duration > 0 and intensity > 0, "[CameraService] Inputs for :Shake() must be positive")
@@ -655,26 +824,37 @@ function CameraService:Shake(intensity: number, duration: number)
 end
 
 
---> @Tilt: converts degree to rads. Tilt go brr. 
-function CameraService:Tilt(degree: number) 
+--- Tilts the camera along the Z axis by the given number of degrees.
+--- @within CameraService
+--- @param degree number -- Tilt angle in degrees.
+function CameraService:Tilt(degree: number)
 	self.TiltFactor = CFrame.fromEulerAnglesYXZ(0, 0, math.rad(degree) or 0)
 end
 
 
---> @TiltAllAxes: converts degree to rads., but in all axes!!! Tilt go brr. 
-function CameraService:TiltAllAxes(x: number, y: number, z: number) 
+--- Tilts the camera across all three axes simultaneously. Inputs are in degrees.
+--- Arguments follow Y, X, Z order to match `CFrame.fromEulerAnglesYXZ`.
+--- @within CameraService
+--- @param x number -- Tilt on the X axis in degrees.
+--- @param y number -- Tilt on the Y axis in degrees.
+--- @param z number -- Tilt on the Z axis in degrees.
+function CameraService:TiltAllAxes(x: number, y: number, z: number)
 	self.TiltFactor = CFrame.fromEulerAnglesYXZ(y and math.rad(y) or 0, x and math.rad(x) or 0, z and math.rad(z) or 0)
 end
 
 
---> @SetWobbling: set up dynamic wobbling (interchangeable w/:Change())
+--- Sets the avatar-aware wobble intensity. Equivalent to `CameraService:Change("Wobble", value, false)`.
+--- @within CameraService
+--- @param value number -- Wobble strength; 0 disables wobble.
 function CameraService:SetWobbling(value: number)
 	self.Wobble = value
 end
 
 
---> @SetVerticalRange: set up the vertical range for angles
-function CameraService:SetVerticalRange(angle: number) --> DO INPUT IN DEGREES
+--- Sets how far up and down the player can look. Input is clamped to 0–89 degrees.
+--- @within CameraService
+--- @param angle number -- Maximum vertical look angle in degrees (0 = locked horizontal, 89 = nearly vertical).
+function CameraService:SetVerticalRange(angle: number)
 	self.Angle = math.clamp(math.abs(angle), 0, 89)
 end
 

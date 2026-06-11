@@ -1,0 +1,93 @@
+# Moonwave configuration — see https://eryn.io/moonwave/docs/Configuration
+#
+# Most fields below are auto-populated from your Git remote when present
+# (title, gitRepoUrl, organizationName, projectName, etc.). The values
+# here serve as the explicit fallbacks used by the GitHub Pages build.
+
+title = "CameraService"
+gitRepoUrl = "https://github.com/rduoDevs/CameraService"
+gitSourceBranch = "main"
+changelog = true
+
+# Custom landing page (instead of just rendering the README).
+[home]
+enabled = true
+includeReadme = false
+bannerImage = "../docs/img/cover.png"
+
+[[home.features]]
+title = "Easy to Use"
+description = "Rather than having to build your own camera from first principles (and a ton of math), or making deep forks into the Roblox camera, CameraService provides an intuitive base, structured as a singleton service that you can call to adjust it how you need!"
+
+[[home.features]]
+title = "Customizable"
+description = "In addition to the plethora of different, prebuilt game cameras that CameraService provides (including first-person, shift-lock, third-person, etc.), you can define your very own game-camera in just a few lines of code, detailing your wants and needs."
+
+[[home.features]]
+title = "Abundant"
+description = "Cross-platform compatibility, smooth camera motion, camera shaking, camera tilting, wobbling, and responsive avatars are just some of the various camera features that CameraService provides (and Roblox does not.)"
+
+# Docusaurus passthrough — controls site URL, project name, and Docusaurus
+# config keys. Values here mirror Moonwave's defaults and are pulled from Git
+# where possible.
+[docusaurus]
+projectName = "CameraService"
+organizationName = "rduoDevs"
+url = "https://rduoDevs.github.io"
+baseUrl = "/CameraService"
+tagline = "A new camera, for a new Roblox."
+onBrokenLinks = "warn"
+onBrokenMarkdownLinks = "warn"
+favicon = "favicon.png"
+
+# Custom navbar links (alongside the auto-generated Docs / API links).
+[[navbar.items]]
+href = "https://devforum.roblox.com/t/cameraservice-a-new-camera-for-a-new-roblox/1988655"
+label = "DevForums"
+position = "right"
+
+# Footer
+[footer]
+style = "light"
+copyright = "Copyright © 2022–2026 rduoDevs. Built with Moonwave and Docusaurus."
+
+[[footer.links]]
+title = "Docs"
+
+[[footer.links.items]]
+label = "Getting Started"
+to = "docs/intro"
+
+[[footer.links]]
+title = "API"
+
+[[footer.links.items]]
+label = "API Reference"
+to = "api/CameraService"
+
+[[footer.links]]
+title = "Community"
+
+[[footer.links.items]]
+label = "DevForums Post"
+href = "https://devforum.roblox.com/t/cameraservice-a-new-camera-for-a-new-roblox/1988655"
+
+[[footer.links.items]]
+label = "Discord Server"
+href = "https://discord.com/invite/bbnRYyfMJq"
+
+[[footer.links]]
+title = "More"
+
+[[footer.links.items]]
+label = "GitHub"
+href = "https://github.com/rduoDevs/CameraService"
+
+# Group methods under these headings on the API page. Tag any method with
+# e.g. `@tag effect` and it'll appear under "Effects" in the right-hand TOC.
+apiCategories = [
+    "view",
+    "host",
+    "customization",
+    "effect",
+]
