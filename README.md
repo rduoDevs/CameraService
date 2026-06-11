@@ -1,4 +1,4 @@
-![CameraService](static/favicon.png)
+![CameraService](docs/img/camservbanner.png)
 ### API Docs: https://rduodevs.github.io/CameraService/ 📷
 ### Like what you see? Give it a star to show support! ⭐
 
