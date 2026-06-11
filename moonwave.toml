@@ -6,7 +6,7 @@
 
 title = "CameraService"
 gitRepoUrl = "https://github.com/rduoDevs/CameraService"
-gitSourceBranch = "main"
+gitSourceBranch = "master"
 changelog = true
 
 # Custom landing page (instead of just rendering the README).

@@ -4,7 +4,7 @@
     Find more ease in implementing beautiful, breath-taking camera effects into your place.
 	
 	DevForums Post: https://devforum.roblox.com/t/cameraservice-a-new-camera-for-a-new-roblox/1988655/
-	GitHub Link: https://github.com/LugicalDev/CameraService
+	GitHub Link: https://github.com/rduoDevs/CameraService
 
     API REFERENCE:
     > :SetCameraView(__type: string)
